@@ -1,21 +1,70 @@
-/* App.css */
 .App {
-  font-family: Arial, sans-serif;
-  padding: 20px;
+  --maincolor: 50, 141, 235;
+  --maincolorD1: 72, 123, 176;
+  --maincolorD2: 16, 83, 153;
+  --maincolorL1: 100, 171, 245;
+  --maincolorL2: 140, 191, 245;
+
+  --secondcolorA: 76, 63, 238;
+  --secondcolorAD1: 87, 80, 178;
+  --secondcolorAD2: 30, 21, 154;
+  --secondcolorAL1: 121, 111, 246;
+  --secondcolorAL2: 154, 147, 246;
+
+  --secondcolorB: 35, 236, 170;
+  --secondcolorBD1: 64, 177, 140;
+  --secondcolorBD2: 11, 153, 107;
+  --secondcolorBL1: 89, 245, 194;
+  --secondcolorBL2: 130, 245, 208;
+
+  --additionalcolor: 255, 168, 38;
+  --additionalcolorD1: 191, 142, 69;
+  --additionalcolorD2: 166, 104, 12;
+  --additionalcolorL1: 255, 190, 92;
+  --additionalcolorL2: 255, 207, 135;
+
+  --textcolor: 0, 0, 0;
+  --textsubcolor: 255, 255, 255;
 }
 
-table {
+.role-table-container {
+  font-family: Arial, sans-serif;
+}
+
+.create-role-button, .create-button, .cancel-button, .delete-button, .confirm-button {
+  background-color: rgba(var(--maincolor));
+  color: rgba(var(--textsubcolor));
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  margin: 5px;
+}
+
+.create-role-button:hover, .create-button:hover, .cancel-button:hover, .delete-button:hover, .confirm-button:hover {
+  background-color: rgba(var(--maincolorD1));
+}
+
+.role-table {
   width: 100%;
   border-collapse: collapse;
+  margin-bottom: 20px;
 }
 
-th, td {
-  border: 1px solid #ddd;
-  padding: 8px;
+.role-table th, .role-table td {
+  border: 1px solid rgba(var(--maincolor));
+  padding: 10px;
+  text-align: left;
 }
 
-th {
-  background-color: #f2f2f2;
+.create-role-section {
+  background-color: rgba(var(--maincolorL1));
+  padding: 20px;
+  border: 1px solid rgba(var(--maincolor));
+  border-radius: 5px;
+}
+
+.create-role-section h2 {
+  margin-top: 0;
 }
 
 .modal {
@@ -23,17 +72,21 @@ th {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: white;
+  background-color: rgba(var(--secondcolorA));
   padding: 20px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  border-radius: 5px;
   z-index: 1000;
+  color: rgba(var(--textsubcolor));
 }
 
-.modal ul {
-  list-style-type: none;
-  padding: 0;
+.pagination-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
 }
 
-.modal button {
-  margin-right: 10px;
+.pagination-bar button {
+  background-color: rgba(var(--secondcolorB));
+  color: rgba(var(--textsubcolor));
 }
