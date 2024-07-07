@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "./App.css"; 
+import "./App.css";
 
 function RoleTable() {
   const [roles, setRoles] = useState([]);
@@ -70,7 +70,7 @@ function RoleTable() {
         delete_roles: false,
         edit_roles: false,
       });
-      setShowCreateRoleModal(false); 
+      setShowCreateRoleModal(false);
     } else {
       alert(response.data);
     }
@@ -136,12 +136,14 @@ function RoleTable() {
     <div className="App">
       <div className="role-table-container">
         <h1>Roles</h1>
-        <button
-          className="create-role-button"
-          onClick={() => setShowCreateRoleModal(true)}
-        >
-          New Role
-        </button>
+        {sessionRole && sessionRole.create_roles && (
+          <button
+            className="create-role-button"
+            onClick={() => setShowCreateRoleModal(true)}
+          >
+            New Role
+          </button>
+        )}
         <table className="role-table">
           <thead>
             <tr>
