@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "./App.css"; // подключение стилей
+import "./App.css"; 
 
 function RoleTable() {
   const [roles, setRoles] = useState([]);
+  const [sessionRole, setSessionRole] = useState(null);
   const [newRole, setNewRole] = useState({
     roleName: "",
     read_distribs: false,
@@ -34,6 +35,7 @@ function RoleTable() {
 
   useEffect(() => {
     fetchRoles();
+    fetchSessionRole();
   }, []);
 
   const fetchRoles = async () => {
@@ -41,19 +43,37 @@ function RoleTable() {
     setRoles(response.data);
   };
 
+  const fetchSessionRole = async () => {
+    const response = await axios.get("/roles/session-role");
+    if (response.status === 200) {
+      setSessionRole(response.data);
+    } else {
+      setSessionRole(null);
+    }
+  };
+
+  const handleSetSessionRole = async (roleId) => {
+    await axios.post(`/roles/set-role/${roleId}`);
+    fetchSessionRole();
+  };
+
   const handleCreateRole = async () => {
-    await axios.post("/roles", newRole);
-    fetchRoles();
-    setNewRole({
-      roleName: "",
-      read_distribs: false,
-      read_softs: false,
-      read_errors: false,
-      create_roles: false,
-      delete_roles: false,
-      edit_roles: false,
-    });
-    setShowCreateRoleModal(false); // скрыть модальное окно создания роли после создания
+    const response = await axios.post("/roles", newRole);
+    if (response.status === 200) {
+      fetchRoles();
+      setNewRole({
+        roleName: "",
+        read_distribs: false,
+        read_softs: false,
+        read_errors: false,
+        create_roles: false,
+        delete_roles: false,
+        edit_roles: false,
+      });
+      setShowCreateRoleModal(false); 
+    } else {
+      alert(response.data);
+    }
   };
 
   const handleDeleteRole = async (roleId) => {
@@ -64,9 +84,13 @@ function RoleTable() {
   };
 
   const confirmDeleteRole = async () => {
-    await axios.delete(`/roles/${roleIdToDelete}`);
-    setShowDeleteModal(false);
-    fetchRoles();
+    const response = await axios.delete(`/roles/${roleIdToDelete}`);
+    if (response.status === 200) {
+      setShowDeleteModal(false);
+      fetchRoles();
+    } else {
+      alert(response.data);
+    }
   };
 
   const handleEditRole = (role) => {
@@ -89,9 +113,13 @@ function RoleTable() {
   };
 
   const handleUpdateRole = async () => {
-    await axios.post("/roles", editableRole);
-    fetchRoles();
-    setShowEditRoleModal(false);
+    const response = await axios.patch("/roles", editableRole);
+    if (response.status === 200) {
+      fetchRoles();
+      setShowEditRoleModal(false);
+    } else {
+      alert(response.data);
+    }
   };
 
   const indexOfLastUser = currentPage * usersPerPage;
@@ -130,7 +158,14 @@ function RoleTable() {
           </thead>
           <tbody>
             {roles.map((role) => (
-              <tr key={role.roleId}>
+              <tr
+                key={role.roleId}
+                className={
+                  sessionRole && role.roleId === sessionRole.roleId
+                    ? "highlight"
+                    : ""
+                }
+              >
                 <td>{role.roleId}</td>
                 <td>{role.roleName}</td>
                 <td>{role.read_distribs ? "Yes" : "No"}</td>
@@ -140,289 +175,290 @@ function RoleTable() {
                 <td>{role.delete_roles ? "Yes" : "No"}</td>
                 <td>{role.edit_roles ? "Yes" : "No"}</td>
                 <td>
-                  {role.roleId !== 1 && role.roleId !== 2 && (
-                    <>
-                      <button
-                        className="delete-button"
-                        onClick={() => handleDeleteRole(role.roleId)}
-                      >
-                        delete
-                      </button>
-                      <button
-                        className="edit-button"
-                        onClick={() => handleEditRole(role)}
-                      >
-                        edit
-                      </button>
-                    </>
+                  <button
+                    className="set-role-button"
+                    onClick={() => handleSetSessionRole(role.roleId)}
+                  >
+                    Set Role
+                  </button>
+                  {sessionRole && sessionRole.delete_roles && (
+                    <button
+                      className="delete-button"
+                      onClick={() => handleDeleteRole(role.roleId)}
+                    >
+                      Delete
+                    </button>
+                  )}
+                  {sessionRole && sessionRole.edit_roles && (
+                    <button
+                      className="edit-button"
+                      onClick={() => handleEditRole(role)}
+                    >
+                      Edit
+                    </button>
                   )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-
-        {showCreateRoleModal && (
-          <div className="modal">
-            <div className="modal-content">
-              <h2>Create Role</h2>
-              <input
-                type="text"
-                placeholder="Role Name"
-                value={newRole.roleName}
-                onChange={(e) =>
-                  setNewRole({ ...newRole, roleName: e.target.value })
-                }
-              />
-              <div>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={newRole.read_distribs}
-                    onChange={(e) =>
-                      setNewRole({
-                        ...newRole,
-                        read_distribs: e.target.checked,
-                      })
-                    }
-                  />
-                  Read Distribs
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={newRole.read_softs}
-                    onChange={(e) =>
-                      setNewRole({ ...newRole, read_softs: e.target.checked })
-                    }
-                  />
-                  Read Softs
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={newRole.read_errors}
-                    onChange={(e) =>
-                      setNewRole({ ...newRole, read_errors: e.target.checked })
-                    }
-                  />
-                  Read Errors
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={newRole.create_roles}
-                    onChange={(e) =>
-                      setNewRole({ ...newRole, create_roles: e.target.checked })
-                    }
-                  />
-                  Create Roles
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={newRole.delete_roles}
-                    onChange={(e) =>
-                      setNewRole({ ...newRole, delete_roles: e.target.checked })
-                    }
-                  />
-                  Delete Roles
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={newRole.edit_roles}
-                    onChange={(e) =>
-                      setNewRole({ ...newRole, edit_roles: e.target.checked })
-                    }
-                  />
-                  Edit Roles
-                </label>
-              </div>
-              <button className="create-button" onClick={handleCreateRole}>
-                Create
-              </button>
-              <button
-                className="cancel-button"
-                onClick={() => setShowCreateRoleModal(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        {showDeleteModal && (
-          <div className="modal">
-            <div className="modal-content">
-              <h2>Affected Users</h2>
-              <input
-                type="text"
-                placeholder="Search Users"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <ul>
-                {filteredUsers.map((user) => (
-                  <li key={user.userId}>{user.username}</li>
-                ))}
-              </ul>
-              <div className="pagination-bar">
-                <button
-                  onClick={() => paginate(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  &lt;
-                </button>
-                <span>
-                  Page {currentPage} of{" "}
-                  {Math.ceil(affectedUsers.length / usersPerPage)}
-                </span>
-                <button
-                  onClick={() => paginate(currentPage + 1)}
-                  disabled={
-                    currentPage ===
-                    Math.ceil(affectedUsers.length / usersPerPage)
-                  }
-                >
-                  &gt;
-                </button>
-              </div>
-              <button className="confirm-button" onClick={confirmDeleteRole}>
-                Confirm Delete
-              </button>
-              <button
-                className="cancel-button"
-                onClick={() => setShowDeleteModal(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        {showEditRoleModal && (
-          <div className="modal">
-            <div className="modal-content">
-              <h2>Edit Role</h2>
-              <input
-                type="text"
-                placeholder="Role Name"
-                value={editableRole.roleName}
-                onChange={(e) =>
-                  setEditableRole({ ...editableRole, roleName: e.target.value })
-                }
-              />
-              <div>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={editableRole.read_distribs}
-                    onChange={(e) =>
-                      setEditableRole({
-                        ...editableRole,
-                        read_distribs: e.target.checked,
-                      })
-                    }
-                  />
-                  Read Distribs
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={editableRole.read_softs}
-                    onChange={(e) =>
-                      setEditableRole({
-                        ...editableRole,
-                        read_softs: e.target.checked,
-                      })
-                    }
-                  />
-                  Read Softs
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={editableRole.read_errors}
-                    onChange={(e) =>
-                      setEditableRole({
-                        ...editableRole,
-                        read_errors: e.target.checked,
-                      })
-                    }
-                  />
-                  Read Errors
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={editableRole.create_roles}
-                    onChange={(e) =>
-                      setEditableRole({
-                        ...editableRole,
-                        create_roles: e.target.checked,
-                      })
-                    }
-                  />
-                  Create Roles
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={editableRole.delete_roles}
-                    onChange={(e) =>
-                      setEditableRole({
-                        ...editableRole,
-                        delete_roles: e.target.checked,
-                      })
-                    }
-                  />
-                  Delete Roles
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={editableRole.edit_roles}
-                    onChange={(e) =>
-                      setEditableRole({
-                        ...editableRole,
-                        edit_roles: e.target.checked,
-                      })
-                    }
-                  />
-                  Edit Roles
-                </label>
-              </div>
-              <button className="update-button" onClick={handleUpdateRole}>
-                Update
-              </button>
-              <button className="cancel-button" onClick={handleCloseEditModal}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
       </div>
+
+      {showCreateRoleModal && (
+        <div className="modal">
+          <div className="modal-content">
+            <h2>Create New Role</h2>
+            <label>Role Name</label>
+            <input
+              type="text"
+              value={newRole.roleName}
+              onChange={(e) =>
+                setNewRole({ ...newRole, roleName: e.target.value })
+              }
+            />
+            <label>
+              <input
+                type="checkbox"
+                checked={newRole.read_distribs}
+                onChange={(e) =>
+                  setNewRole({ ...newRole, read_distribs: e.target.checked })
+                }
+              />
+              Read Distribs
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={newRole.read_softs}
+                onChange={(e) =>
+                  setNewRole({ ...newRole, read_softs: e.target.checked })
+                }
+              />
+              Read Softs
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={newRole.read_errors}
+                onChange={(e) =>
+                  setNewRole({ ...newRole, read_errors: e.target.checked })
+                }
+              />
+              Read Errors
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={newRole.create_roles}
+                onChange={(e) =>
+                  setNewRole({ ...newRole, create_roles: e.target.checked })
+                }
+              />
+              Create Roles
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={newRole.delete_roles}
+                onChange={(e) =>
+                  setNewRole({ ...newRole, delete_roles: e.target.checked })
+                }
+              />
+              Delete Roles
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={newRole.edit_roles}
+                onChange={(e) =>
+                  setNewRole({ ...newRole, edit_roles: e.target.checked })
+                }
+              />
+              Edit Roles
+            </label>
+            <button className="save-button" onClick={handleCreateRole}>
+              Save
+            </button>
+            <button
+              className="cancel-button"
+              onClick={() => setShowCreateRoleModal(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && (
+        <div className="modal">
+          <div className="modal-content">
+            <h2>Delete Role</h2>
+            <p>
+              Are you sure you want to delete this role? It is assigned to the
+              following users:
+            </p>
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <table className="user-table">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((user) => (
+                  <tr key={user.id}>
+                    <td>{user.username}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <button className="delete-button" onClick={confirmDeleteRole}>
+              Delete
+            </button>
+            <button
+              className="cancel-button"
+              onClick={() => setShowDeleteModal(false)}
+            >
+              Cancel
+            </button>
+            <div className="pagination">
+              <button
+                className="pagination-arrow"
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                &laquo;
+              </button>
+              {Array.from(
+                { length: Math.ceil(affectedUsers.length / usersPerPage) },
+                (_, i) => (
+                  <button
+                    key={i + 1}
+                    onClick={() => paginate(i + 1)}
+                    className={currentPage === i + 1 ? "active" : ""}
+                  >
+                    {i + 1}
+                  </button>
+                )
+              )}
+              <button
+                className="pagination-arrow"
+                onClick={() => paginate(currentPage + 1)}
+                disabled={
+                  currentPage === Math.ceil(affectedUsers.length / usersPerPage)
+                }
+              >
+                &raquo;
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEditRoleModal && (
+        <div className="modal">
+          <div className="modal-content">
+            <h2>Edit Role</h2>
+            <label>Role Name</label>
+            <input
+              type="text"
+              value={editableRole.roleName}
+              onChange={(e) =>
+                setEditableRole({ ...editableRole, roleName: e.target.value })
+              }
+            />
+            <label>
+              <input
+                type="checkbox"
+                checked={editableRole.read_distribs}
+                onChange={(e) =>
+                  setEditableRole({
+                    ...editableRole,
+                    read_distribs: e.target.checked,
+                  })
+                }
+              />
+              Read Distribs
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={editableRole.read_softs}
+                onChange={(e) =>
+                  setEditableRole({
+                    ...editableRole,
+                    read_softs: e.target.checked,
+                  })
+                }
+              />
+              Read Softs
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={editableRole.read_errors}
+                onChange={(e) =>
+                  setEditableRole({
+                    ...editableRole,
+                    read_errors: e.target.checked,
+                  })
+                }
+              />
+              Read Errors
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={editableRole.create_roles}
+                onChange={(e) =>
+                  setEditableRole({
+                    ...editableRole,
+                    create_roles: e.target.checked,
+                  })
+                }
+              />
+              Create Roles
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={editableRole.delete_roles}
+                onChange={(e) =>
+                  setEditableRole({
+                    ...editableRole,
+                    delete_roles: e.target.checked,
+                  })
+                }
+              />
+              Delete Roles
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={editableRole.edit_roles}
+                onChange={(e) =>
+                  setEditableRole({
+                    ...editableRole,
+                    edit_roles: e.target.checked,
+                  })
+                }
+              />
+              Edit Roles
+            </label>
+            <button className="save-button" onClick={handleUpdateRole}>
+              Save
+            </button>
+            <button className="cancel-button" onClick={handleCloseEditModal}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
