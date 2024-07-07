@@ -183,7 +183,7 @@ function RoleTable() {
                   >
                     Set Role
                   </button>
-                  {sessionRole && sessionRole.delete_roles && (
+                  {sessionRole && sessionRole.delete_roles && role.roleName !== 'user' && role.roleName !== 'admin' && (
                     <button
                       className="delete-button"
                       onClick={() => handleDeleteRole(role.roleId)}
@@ -191,7 +191,7 @@ function RoleTable() {
                       Delete
                     </button>
                   )}
-                  {sessionRole && sessionRole.edit_roles && (
+                  {sessionRole && sessionRole.edit_roles && role.roleName !== 'user' && role.roleName !== 'admin' && (
                     <button
                       className="edit-button"
                       onClick={() => handleEditRole(role)}
