@@ -43,7 +43,15 @@ function RoleTable() {
   const fetchRoles = async () => {
     try {
       const response = await axios.get("/roles");
-      setRoles(response.data);
+      if (response.status === 204) {
+        setRoles([]); 
+        notification.warning({
+          message: "Информация",
+          description: "Список ролей пуст",
+        });
+      } else if (response.status === 200) {
+        setRoles(response.data);
+      }
     } catch (error) {
       notification.error({
         message: "Ошибка",
@@ -51,6 +59,7 @@ function RoleTable() {
       });
     }
   };
+  
 
   const fetchSessionRole = async () => {
     try {
