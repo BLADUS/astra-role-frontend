@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./App.css";
+import { notification } from "antd";
+import "antd/dist/reset.css";
 
 function RoleTable() {
   const [roles, setRoles] = useState([]);
@@ -39,57 +41,104 @@ function RoleTable() {
   }, []);
 
   const fetchRoles = async () => {
-    const response = await axios.get("/roles");
-    setRoles(response.data);
+    try {
+      const response = await axios.get("/roles");
+      setRoles(response.data);
+    } catch (error) {
+      notification.error({
+        message: "Ошибка",
+        description: "Не удалось получить список ролей",
+      });
+    }
   };
 
   const fetchSessionRole = async () => {
-    const response = await axios.get("/roles/session-role");
-    if (response.status === 200) {
-      setSessionRole(response.data);
-    } else {
-      setSessionRole(null);
+    try {
+      const response = await axios.get("/roles/session-role");
+      if (response.status === 200) {
+        setSessionRole(response.data);
+      } else {
+        setSessionRole(null);
+      }
+    } catch (error) {
+      notification.error({
+        message: "Ошибка",
+        description: "Не удалось получить сессию роли",
+      });
     }
   };
 
   const handleSetSessionRole = async (roleId) => {
-    await axios.post(`/roles/set-role/${roleId}`);
-    fetchSessionRole();
+    try {
+      await axios.post(`/roles/set-role/${roleId}`);
+      fetchSessionRole();
+    } catch (error) {
+      notification.error({
+        message: "Ошибка",
+        description: "Не удалось установить сессию роли",
+      });
+    }
   };
 
   const handleCreateRole = async () => {
-    const response = await axios.post("/roles", newRole);
-    if (response.status === 200) {
-      fetchRoles();
-      setNewRole({
-        roleName: "",
-        read_distribs: false,
-        read_softs: false,
-        read_errors: false,
-        create_roles: false,
-        delete_roles: false,
-        edit_roles: false,
+    try {
+      const response = await axios.post("/roles", newRole);
+      if (response.status === 200) {
+        fetchRoles();
+        setNewRole({
+          roleName: "",
+          read_distribs: false,
+          read_softs: false,
+          read_errors: false,
+          create_roles: false,
+          delete_roles: false,
+          edit_roles: false,
+        });
+        setShowCreateRoleModal(false);
+        notification.success({
+          message: "Успех",
+          description: "Роль успешно создана",
+        });
+      }
+    } catch (error) {
+      notification.error({
+        message: "Ошибка",
+        description: error.response.data,
       });
-      setShowCreateRoleModal(false);
-    } else {
-      alert(response.data);
     }
   };
 
   const handleDeleteRole = async (roleId) => {
-    const response = await axios.get(`/roles/affected-users/${roleId}`);
-    setAffectedUsers(response.data);
-    setRoleIdToDelete(roleId);
-    setShowDeleteModal(true);
+    try {
+      const response = await axios.get(`/roles/affected-users/${roleId}`);
+      setAffectedUsers(response.data);
+      setRoleIdToDelete(roleId);
+      setShowDeleteModal(true);
+    } catch (error) {
+      notification.error({
+        message: "Ошибка",
+        description:
+          "Не удалось получить список пользователей, затронутых ролью",
+      });
+    }
   };
 
   const confirmDeleteRole = async () => {
-    const response = await axios.delete(`/roles/${roleIdToDelete}`);
-    if (response.status === 200) {
-      setShowDeleteModal(false);
-      fetchRoles();
-    } else {
-      alert(response.data);
+    try {
+      const response = await axios.delete(`/roles/${roleIdToDelete}`);
+      if (response.status === 200) {
+        setShowDeleteModal(false);
+        fetchRoles();
+        notification.success({
+          message: "Успех",
+          description: "Роль успешно удалена",
+        });
+      }
+    } catch (error) {
+      notification.error({
+        message: "Ошибка",
+        description: error.response.data,
+      });
     }
   };
 
@@ -113,12 +162,21 @@ function RoleTable() {
   };
 
   const handleUpdateRole = async () => {
-    const response = await axios.patch("/roles", editableRole);
-    if (response.status === 200) {
-      fetchRoles();
-      setShowEditRoleModal(false);
-    } else {
-      alert(response.data);
+    try {
+      const response = await axios.patch("/roles", editableRole);
+      if (response.status === 200) {
+        fetchRoles();
+        setShowEditRoleModal(false);
+        notification.success({
+          message: "Успех",
+          description: "Роль успешно обновлена",
+        });
+      }
+    } catch (error) {
+      notification.error({
+        message: "Ошибка",
+        description: error.response.data,
+      });
     }
   };
 
@@ -128,9 +186,11 @@ function RoleTable() {
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  const filteredUsers = currentUsers.filter((user) =>
-    user.username.toLowerCase().startsWith(searchTerm.toLowerCase())
-  );
+  const filteredUsers = Array.isArray(currentUsers)
+    ? currentUsers.filter((user) =>
+        user.username.toLowerCase().startsWith(searchTerm.toLowerCase())
+      )
+    : [];
 
   return (
     <div className="App">
@@ -183,22 +243,28 @@ function RoleTable() {
                   >
                     Set Role
                   </button>
-                  {sessionRole && sessionRole.delete_roles && role.roleName !== 'user' && role.roleName !== 'admin' && (
-                    <button
-                      className="delete-button"
-                      onClick={() => handleDeleteRole(role.roleId)}
-                    >
-                      Delete
-                    </button>
-                  )}
-                  {sessionRole && sessionRole.edit_roles && role.roleName !== 'user' && role.roleName !== 'admin' && (
-                    <button
-                      className="edit-button"
-                      onClick={() => handleEditRole(role)}
-                    >
-                      Edit
-                    </button>
-                  )}
+                  {sessionRole &&
+                    sessionRole.delete_roles &&
+                    role.roleName !== "user" &&
+                    role.roleName !== "admin" && (
+                      <button
+                        className="delete-button"
+                        onClick={() => handleDeleteRole(role.roleId)}
+                      >
+                        Delete
+                      </button>
+                    )}
+                  {sessionRole &&
+                    sessionRole.edit_roles &&
+                    role.roleName !== "user" &&
+                    role.roleName !== "admin" && (
+                      <button
+                        className="edit-button"
+                        onClick={() => handleEditRole(role)}
+                      >
+                        Edit
+                      </button>
+                    )}
                 </td>
               </tr>
             ))}
