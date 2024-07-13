@@ -1,61 +1,31 @@
-import React, { useEffect } from "react";
-import { Modal, Form, Input, Checkbox, Button, notification } from "antd";
-import axios from "axios";
+import React from "react";
+import { Modal, Form, Input, Checkbox } from "antd";
 
-const EditRoleModal = ({ visible, setVisible, editableRole, handleUpdateRole, setEditableRole }) => {
+const EditRoleModal = ({ visible, setVisible, role, handleUpdateRole, handleClose }) => {
   const [form] = Form.useForm();
 
-  useEffect(() => {
-    if (visible) {
-      form.setFieldsValue(editableRole);
-    }
-  }, [visible, editableRole, form]);
-
-  const handleOk = async () => {
-    try {
-      const values = await form.validateFields();
-      const updatedRole = { ...editableRole, ...values };
-      await axios.patch(`/roles/${editableRole.roleId}`, updatedRole); 
-      handleUpdateRole(); 
-      setVisible(false);
-      notification.success({
-        message: "Успех",
-        description: "Роль успешно обновлена",
-      });
-    } catch (error) {
-      console.log("Validate Failed:", error);
-      notification.error({
-        message: "Ошибка",
-        description: "Не удалось обновить роль",
-      });
-    }
+  const onFinish = (values) => {
+    const updatedRole = { ...role, ...values };
+    handleUpdateRole(updatedRole);
   };
 
   return (
     <Modal
       title="Edit Role"
       visible={visible}
-      onCancel={() => {
-        setVisible(false);
-        setEditableRole(null); // Сбрасываем editableRole при закрытии модального окна
-      }}
-      footer={[
-        <Button key="back" onClick={() => {
-          setVisible(false);
-          setEditableRole(null); // Сбрасываем editableRole при закрытии модального окна
-        }}>
-          Отмена
-        </Button>,
-        <Button key="submit" type="primary" onClick={handleOk}>
-          Сохранить
-        </Button>,
-      ]}
+      onCancel={handleClose}
+      onOk={() => form.submit()}
     >
-      <Form form={form} layout="vertical" name="edit_role_form">
+      <Form
+        form={form}
+        initialValues={role}
+        onFinish={onFinish}
+        layout="vertical"
+      >
         <Form.Item
           name="roleName"
-          label="Название роли"
-          rules={[{ required: true, message: "Введите название роли!" }]}
+          label="Role Name"
+          rules={[{ required: true, message: "Please input the role name!" }]}
         >
           <Input />
         </Form.Item>

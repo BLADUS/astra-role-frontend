@@ -84,7 +84,8 @@ function RoleTable() {
     } catch (error) {
       notification.error({
         message: "Ошибка",
-        description: "Не удалось получить список пользователей, затронутых ролью",
+        description:
+          "Не удалось получить список пользователей, затронутых ролью",
       });
     }
   };
@@ -110,26 +111,6 @@ function RoleTable() {
     setShowEditRoleModal(true);
   };
 
-  const handleUpdateRole = async () => {
-    try {
-      const response = await axios.patch("/roles", editableRole);
-      if (response.status === 200) {
-        fetchRoles();
-        setShowEditRoleModal(false);
-        notification.success({
-          message: "Успех",
-          description: "Роль успешно обновлена",
-        });
-      }
-    } catch (error) {
-      notification.error({
-        message: "Ошибка",
-        description: error.response.data,
-      });
-    }
-  };
-  
-
   const handleCloseEditModal = () => {
     setShowEditRoleModal(false);
     setEditableRole({
@@ -142,6 +123,23 @@ function RoleTable() {
       delete_roles: false,
       edit_roles: false,
     });
+  };
+
+  const handleUpdateRole = async (updatedRole) => {
+    try {
+      await axios.patch(`/roles`, updatedRole);
+      fetchRoles();
+      setShowEditRoleModal(false);
+      notification.success({
+        message: "Успех",
+        description: "Роль успешно обновлена",
+      });
+    } catch (error) {
+      notification.error({
+        message: "Ошибка",
+        description: "Не удалось обновить роль",
+      });
+    }
   };
 
   return (
@@ -240,11 +238,10 @@ function RoleTable() {
 
       <EditRoleModal
         visible={showEditRoleModal}
-        setVisible={handleCloseEditModal}
-        editableRole={editableRole}
-        setEditableRole={setEditableRole}
-        fetchRoles={fetchRoles}
-        handleUpdateRole={handleUpdateRole} 
+        setVisible={setShowEditRoleModal}
+        role={editableRole}
+        handleUpdateRole={handleUpdateRole}
+        handleClose={handleCloseEditModal}
       />
     </div>
   );
