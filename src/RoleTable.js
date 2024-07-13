@@ -3,26 +3,17 @@ import axios from "axios";
 import "./App.css";
 import { notification } from "antd";
 import "antd/dist/reset.css";
+import CreateRoleModal from "./CreateRoleModal";
+import DeleteRoleModal from "./DeleteRoleModal";
+import EditRoleModal from "./EditRoleModal";
 
 function RoleTable() {
   const [roles, setRoles] = useState([]);
   const [sessionRole, setSessionRole] = useState(null);
-  const [newRole, setNewRole] = useState({
-    roleName: "",
-    read_distribs: false,
-    read_softs: false,
-    read_errors: false,
-    create_roles: false,
-    delete_roles: false,
-    edit_roles: false,
-  });
-  const [affectedUsers, setAffectedUsers] = useState([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [roleIdToDelete, setRoleIdToDelete] = useState(null);
+  const [affectedUsers, setAffectedUsers] = useState([]);
   const [showCreateRoleModal, setShowCreateRoleModal] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [usersPerPage] = useState(20);
-  const [searchTerm, setSearchTerm] = useState("");
   const [showEditRoleModal, setShowEditRoleModal] = useState(false);
   const [editableRole, setEditableRole] = useState({
     roleId: null,
@@ -44,7 +35,7 @@ function RoleTable() {
     try {
       const response = await axios.get("/roles");
       if (response.status === 204) {
-        setRoles([]); 
+        setRoles([]);
         notification.warning({
           message: "Информация",
           description: "Список ролей пуст",
@@ -59,7 +50,6 @@ function RoleTable() {
       });
     }
   };
-  
 
   const fetchSessionRole = async () => {
     try {
@@ -77,6 +67,28 @@ function RoleTable() {
     }
   };
 
+  const fetchAffectedUsers = async (roleId) => {
+    try {
+      const response = await axios.get(`/roles/affected-users/${roleId}`);
+      if (response.status === 204) {
+        notification.info({
+          message: "Информация",
+          description: "Нет пользователей с этой ролью.",
+        });
+        setAffectedUsers([]);
+      } else {
+        setAffectedUsers(response.data);
+      }
+      setRoleIdToDelete(roleId);
+      setShowDeleteModal(true);
+    } catch (error) {
+      notification.error({
+        message: "Ошибка",
+        description: "Не удалось получить список пользователей, затронутых ролью",
+      });
+    }
+  };
+
   const handleSetSessionRole = async (roleId) => {
     try {
       await axios.post(`/roles/set-role/${roleId}`);
@@ -89,85 +101,13 @@ function RoleTable() {
     }
   };
 
-  const handleCreateRole = async () => {
-    try {
-      const response = await axios.post("/roles", newRole);
-      if (response.status === 200) {
-        fetchRoles();
-        setNewRole({
-          roleName: "",
-          read_distribs: false,
-          read_softs: false,
-          read_errors: false,
-          create_roles: false,
-          delete_roles: false,
-          edit_roles: false,
-        });
-        setShowCreateRoleModal(false);
-        notification.success({
-          message: "Успех",
-          description: "Роль успешно создана",
-        });
-      }
-    } catch (error) {
-      notification.error({
-        message: "Ошибка",
-        description: error.response.data,
-      });
-    }
-  };
-
-  const handleDeleteRole = async (roleId) => {
-    try {
-      const response = await axios.get(`/roles/affected-users/${roleId}`);
-      setAffectedUsers(response.data);
-      setRoleIdToDelete(roleId);
-      setShowDeleteModal(true);
-    } catch (error) {
-      notification.error({
-        message: "Ошибка",
-        description:
-          "Не удалось получить список пользователей, затронутых ролью",
-      });
-    }
-  };
-
-  const confirmDeleteRole = async () => {
-    try {
-      const response = await axios.delete(`/roles/${roleIdToDelete}`);
-      if (response.status === 200) {
-        setShowDeleteModal(false);
-        fetchRoles();
-        notification.success({
-          message: "Успех",
-          description: "Роль успешно удалена",
-        });
-      }
-    } catch (error) {
-      notification.error({
-        message: "Ошибка",
-        description: error.response.data,
-      });
-    }
+  const handleDeleteRole = (roleId) => {
+    fetchAffectedUsers(roleId);
   };
 
   const handleEditRole = (role) => {
     setEditableRole(role);
     setShowEditRoleModal(true);
-  };
-
-  const handleCloseEditModal = () => {
-    setShowEditRoleModal(false);
-    setEditableRole({
-      roleId: null,
-      roleName: "",
-      read_distribs: false,
-      read_softs: false,
-      read_errors: false,
-      create_roles: false,
-      delete_roles: false,
-      edit_roles: false,
-    });
   };
 
   const handleUpdateRole = async () => {
@@ -188,18 +128,21 @@ function RoleTable() {
       });
     }
   };
+  
 
-  const indexOfLastUser = currentPage * usersPerPage;
-  const indexOfFirstUser = indexOfLastUser - usersPerPage;
-  const currentUsers = affectedUsers.slice(indexOfFirstUser, indexOfLastUser);
-
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-  const filteredUsers = Array.isArray(currentUsers)
-    ? currentUsers.filter((user) =>
-        user.username.toLowerCase().startsWith(searchTerm.toLowerCase())
-      )
-    : [];
+  const handleCloseEditModal = () => {
+    setShowEditRoleModal(false);
+    setEditableRole({
+      roleId: null,
+      roleName: "",
+      read_distribs: false,
+      read_softs: false,
+      read_errors: false,
+      create_roles: false,
+      delete_roles: false,
+      edit_roles: false,
+    });
+  };
 
   return (
     <div className="App">
@@ -281,261 +224,28 @@ function RoleTable() {
         </table>
       </div>
 
-      {showCreateRoleModal && (
-        <div className="modal">
-          <div className="modal-content">
-            <h2>Create New Role</h2>
-            <label>Role Name</label>
-            <input
-              type="text"
-              value={newRole.roleName}
-              onChange={(e) =>
-                setNewRole({ ...newRole, roleName: e.target.value })
-              }
-            />
-            <label>
-              <input
-                type="checkbox"
-                checked={newRole.read_distribs}
-                onChange={(e) =>
-                  setNewRole({ ...newRole, read_distribs: e.target.checked })
-                }
-              />
-              Read Distribs
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={newRole.read_softs}
-                onChange={(e) =>
-                  setNewRole({ ...newRole, read_softs: e.target.checked })
-                }
-              />
-              Read Softs
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={newRole.read_errors}
-                onChange={(e) =>
-                  setNewRole({ ...newRole, read_errors: e.target.checked })
-                }
-              />
-              Read Errors
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={newRole.create_roles}
-                onChange={(e) =>
-                  setNewRole({ ...newRole, create_roles: e.target.checked })
-                }
-              />
-              Create Roles
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={newRole.delete_roles}
-                onChange={(e) =>
-                  setNewRole({ ...newRole, delete_roles: e.target.checked })
-                }
-              />
-              Delete Roles
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={newRole.edit_roles}
-                onChange={(e) =>
-                  setNewRole({ ...newRole, edit_roles: e.target.checked })
-                }
-              />
-              Edit Roles
-            </label>
-            <button className="save-button" onClick={handleCreateRole}>
-              Save
-            </button>
-            <button
-              className="cancel-button"
-              onClick={() => setShowCreateRoleModal(false)}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      <CreateRoleModal
+        visible={showCreateRoleModal}
+        setVisible={setShowCreateRoleModal}
+        fetchRoles={fetchRoles}
+      />
 
-      {showDeleteModal && (
-        <div className="modal">
-          <div className="modal-content">
-            <h2>Delete Role</h2>
-            <p>
-              Are you sure you want to delete this role? It is assigned to the
-              following users:
-            </p>
-            <input
-              type="text"
-              placeholder="Search users..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <table className="user-table">
-              <thead>
-                <tr>
-                  <th>Username</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map((user) => (
-                  <tr key={user.id}>
-                    <td>{user.username}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <button className="delete-button" onClick={confirmDeleteRole}>
-              Delete
-            </button>
-            <button
-              className="cancel-button"
-              onClick={() => setShowDeleteModal(false)}
-            >
-              Cancel
-            </button>
-            <div className="pagination">
-              <button
-                className="pagination-arrow"
-                onClick={() => paginate(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                &laquo;
-              </button>
-              {Array.from(
-                { length: Math.ceil(affectedUsers.length / usersPerPage) },
-                (_, i) => (
-                  <button
-                    key={i + 1}
-                    onClick={() => paginate(i + 1)}
-                    className={currentPage === i + 1 ? "active" : ""}
-                  >
-                    {i + 1}
-                  </button>
-                )
-              )}
-              <button
-                className="pagination-arrow"
-                onClick={() => paginate(currentPage + 1)}
-                disabled={
-                  currentPage === Math.ceil(affectedUsers.length / usersPerPage)
-                }
-              >
-                &raquo;
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteRoleModal
+        visible={showDeleteModal}
+        setVisible={setShowDeleteModal}
+        roleId={roleIdToDelete}
+        affectedUsers={affectedUsers}
+        fetchRoles={fetchRoles}
+      />
 
-      {showEditRoleModal && (
-        <div className="modal">
-          <div className="modal-content">
-            <h2>Edit Role</h2>
-            <label>Role Name</label>
-            <input
-              type="text"
-              value={editableRole.roleName}
-              onChange={(e) =>
-                setEditableRole({ ...editableRole, roleName: e.target.value })
-              }
-            />
-            <label>
-              <input
-                type="checkbox"
-                checked={editableRole.read_distribs}
-                onChange={(e) =>
-                  setEditableRole({
-                    ...editableRole,
-                    read_distribs: e.target.checked,
-                  })
-                }
-              />
-              Read Distribs
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={editableRole.read_softs}
-                onChange={(e) =>
-                  setEditableRole({
-                    ...editableRole,
-                    read_softs: e.target.checked,
-                  })
-                }
-              />
-              Read Softs
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={editableRole.read_errors}
-                onChange={(e) =>
-                  setEditableRole({
-                    ...editableRole,
-                    read_errors: e.target.checked,
-                  })
-                }
-              />
-              Read Errors
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={editableRole.create_roles}
-                onChange={(e) =>
-                  setEditableRole({
-                    ...editableRole,
-                    create_roles: e.target.checked,
-                  })
-                }
-              />
-              Create Roles
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={editableRole.delete_roles}
-                onChange={(e) =>
-                  setEditableRole({
-                    ...editableRole,
-                    delete_roles: e.target.checked,
-                  })
-                }
-              />
-              Delete Roles
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={editableRole.edit_roles}
-                onChange={(e) =>
-                  setEditableRole({
-                    ...editableRole,
-                    edit_roles: e.target.checked,
-                  })
-                }
-              />
-              Edit Roles
-            </label>
-            <button className="save-button" onClick={handleUpdateRole}>
-              Save
-            </button>
-            <button className="cancel-button" onClick={handleCloseEditModal}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      <EditRoleModal
+        visible={showEditRoleModal}
+        setVisible={handleCloseEditModal}
+        editableRole={editableRole}
+        setEditableRole={setEditableRole}
+        fetchRoles={fetchRoles}
+        handleUpdateRole={handleUpdateRole} 
+      />
     </div>
   );
 }
