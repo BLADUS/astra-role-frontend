@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./App.css";
-import { notification } from "antd";
+import { notification, Tabs } from "antd";
 import "antd/dist/reset.css";
 import CreateRoleModal from "./CreateRoleModal";
 import DeleteRoleModal from "./DeleteRoleModal";
 import EditRoleModal from "./EditRoleModal";
-import { Tabs } from "antd";
-import ErrorsTable from "./ErrorsTable"; 
-import DistribsTable from "./DistribsTable"; 
-import SoftsTable from "./SoftsTable"; 
+import ErrorsTable from "./ErrorsTable";
+import DistribsTable from "./DistribsTable";
+import SoftsTable from "./SoftsTable";
+import UserTable from "./UserTable";
 
 function RoleTable() {
   const [roles, setRoles] = useState([]);
@@ -169,6 +169,9 @@ function RoleTable() {
           </Tabs.TabPane>
           <Tabs.TabPane tab="Softs" key="softs">
             <SoftsTable />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="Users" key="users">
+            <UserTable />
           </Tabs.TabPane>
         </Tabs>
 
