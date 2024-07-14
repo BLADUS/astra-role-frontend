@@ -96,7 +96,7 @@ function RoleTable() {
 
   const handleSetSessionRole = async (roleId) => {
     try {
-      await axios.post(`/roles/set-role/${roleId}`);
+      await axios.patch(`/roles/set-role/${roleId}`);
       fetchSessionRole();
     } catch (error) {
       notification.error({
@@ -150,7 +150,7 @@ function RoleTable() {
     <div className="App">
       <div className="role-table-container">
         <h1>Roles</h1>
-        
+
         {sessionRole && sessionRole.create_roles && (
           <button
             className="create-role-button"
@@ -159,7 +159,7 @@ function RoleTable() {
             New Role
           </button>
         )}
-        
+
         <Tabs defaultActiveKey="errors">
           <Tabs.TabPane tab="Errors" key="errors">
             <ErrorsTable />

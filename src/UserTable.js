@@ -50,7 +50,7 @@ const UserTable = () => {
   const handleSetSessionUser = async (userId) => {
     try {
       await axios.post(`/users/set-user/${userId}`);
-      fetchSessionUser();
+      fetchSessionUser(); 
     } catch (error) {
       notification.error({
         message: "Ошибка",
@@ -58,6 +58,7 @@ const UserTable = () => {
       });
     }
   };
+  
 
   const columns = [
     {
