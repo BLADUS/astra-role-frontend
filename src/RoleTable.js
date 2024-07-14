@@ -6,6 +6,10 @@ import "antd/dist/reset.css";
 import CreateRoleModal from "./CreateRoleModal";
 import DeleteRoleModal from "./DeleteRoleModal";
 import EditRoleModal from "./EditRoleModal";
+import { Tabs } from "antd";
+import ErrorsTable from "./ErrorsTable"; 
+import DistribsTable from "./DistribsTable"; 
+import SoftsTable from "./SoftsTable"; 
 
 function RoleTable() {
   const [roles, setRoles] = useState([]);
@@ -146,6 +150,7 @@ function RoleTable() {
     <div className="App">
       <div className="role-table-container">
         <h1>Roles</h1>
+        
         {sessionRole && sessionRole.create_roles && (
           <button
             className="create-role-button"
@@ -154,6 +159,19 @@ function RoleTable() {
             New Role
           </button>
         )}
+        
+        <Tabs defaultActiveKey="errors">
+          <Tabs.TabPane tab="Errors" key="errors">
+            <ErrorsTable />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="Distribs" key="distribs">
+            <DistribsTable />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="Softs" key="softs">
+            <SoftsTable />
+          </Tabs.TabPane>
+        </Tabs>
+
         <table className="role-table">
           <thead>
             <tr>
