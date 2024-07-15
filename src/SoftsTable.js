@@ -11,14 +11,20 @@ const SoftsTable = () => {
 
   const fetchSofts = async () => {
     try {
-      const response = await axios.get("resources/softs");
+      const response = await axios.get("/resources/softs");
       if (response.status === 200) {
         setSofts(response.data);
-      } else {
+      } else if (response.status === 204) {
         setSofts([]);
         notification.warning({
           message: "Информация",
           description: "Список программных продуктов пуст",
+        });
+      } else {
+        setSofts([]);
+        notification.warning({
+          message: "Информация",
+          description: "Не удалось получить список программных продуктов",
         });
       }
     } catch (error) {

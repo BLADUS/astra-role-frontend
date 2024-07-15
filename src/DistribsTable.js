@@ -11,14 +11,20 @@ const DistribsTable = () => {
 
   const fetchDistribs = async () => {
     try {
-      const response = await axios.get("resources/distribs");
+      const response = await axios.get("/resources/distribs");
       if (response.status === 200) {
         setDistribs(response.data);
-      } else {
+      } else if (response.status === 204) {
         setDistribs([]);
         notification.warning({
           message: "Информация",
           description: "Список дистрибутивов пуст",
+        });
+      } else {
+        setDistribs([]);
+        notification.warning({
+          message: "Информация",
+          description: "Не удалось получить список дистрибутивов",
         });
       }
     } catch (error) {
